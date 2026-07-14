@@ -11,8 +11,20 @@ import PartVisualizer from "./components/PartVisualizer";
 import { exportToPDF } from "./utils/pdfGenerator";
 
 // Helper function to compress and resize image on client side before uploading to prevent server/proxy body size limit errors
-const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string> => {
+const compressImage = (file: File, maxDim = 1000, quality = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
+    // If it's a PDF or not an image type we can process on canvas, return normal base64
+    if (!file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => {
+        // Safe fallback: try to resolve with original file representation if possible
+        resolve("");
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
@@ -45,7 +57,13 @@ const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string
         const dataUrl = canvas.toDataURL("image/jpeg", quality);
         resolve(dataUrl);
       };
-      img.onerror = (err) => reject(err);
+      img.onerror = () => {
+        // Fallback to original base64 if image loading fails
+        const fallbackReader = new FileReader();
+        fallbackReader.onload = () => resolve(fallbackReader.result as string);
+        fallbackReader.onerror = (error) => reject(error);
+        fallbackReader.readAsDataURL(file);
+      };
     };
     reader.onerror = (err) => reject(err);
   });
