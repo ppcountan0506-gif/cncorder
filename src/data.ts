@@ -40,6 +40,14 @@ export const MATERIALS: Material[] = [
     pricePerKg: 180,
     machiningFactor: 1.50, // extremely easy to machine
     color: "#f8fafc"
+  },
+  {
+    key: "acrylic",
+    name: "壓克力 (Acrylic / PMMA)",
+    density: 1.19,
+    pricePerKg: 150,
+    machiningFactor: 1.60, // extremely easy and fast to cut
+    color: "#e2e8f0"
   }
 ];
 
