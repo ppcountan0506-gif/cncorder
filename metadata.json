@@ -1,0 +1,6 @@
+{
+  "name": "加工件智慧報價系統",
+  "description": "智慧讀取加工圖紙尺寸，自動計算材料、加工工時與表面處理成本，並支援一鍵導出 PDF 報價單。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
