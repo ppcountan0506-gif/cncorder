@@ -82,6 +82,10 @@ async function startServer() {
   app.use(express.json({ limit: "15mb" }));
 
   // API Endpoints
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
   app.post("/api/analyze-drawing", async (req, res) => {
     try {
       const { image, filename } = req.body;

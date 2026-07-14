@@ -10,6 +10,47 @@ import { MATERIALS, SURFACE_TREATMENTS, DEFAULT_ANALYSIS_SAMPLE, DEFAULT_CONFIG,
 import PartVisualizer from "./components/PartVisualizer";
 import { exportToPDF } from "./utils/pdfGenerator";
 
+// Helper function to compress and resize image on client side before uploading to prevent server/proxy body size limit errors
+const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(event.target?.result as string); // fallback to original
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 export default function App() {
   // Application State
   const [analysis, setAnalysis] = useState<DrawingAnalysis>(DEFAULT_ANALYSIS_SAMPLE);
@@ -98,15 +139,8 @@ export default function App() {
     }, 1200);
 
     try {
-      // Convert file to base64
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(file);
-        fileReader.onload = () => resolve(fileReader.result as string);
-        fileReader.onerror = (error) => reject(error);
-      });
-
-      const base64Data = await base64Promise;
+      // Compress and convert file to base64 to avoid proxy size limits
+      const base64Data = await compressImage(file);
 
       const response = await fetch("/api/analyze-drawing", {
         method: "POST",
